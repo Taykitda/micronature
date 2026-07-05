@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: micronature-app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_USER=root
+      - DB_PASSWORD=mysql_root_password
+      - DB_DATABASE=micronature
+      - JWT_SECRET=micronature_jwt_secret_key_2026
+      # Pass through or define optional Gemini and model settings if available in host env
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - MODEL_API_KEY=${MODEL_API_KEY}
+      - MODEL_BASE_URL=${MODEL_BASE_URL}
+      - MODEL_NAME=${MODEL_NAME}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: always
+
+  db:
+    image: mysql:8.0
+    container_name: micronature-db
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=mysql_root_password
+      - MYSQL_DATABASE=micronature
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p" + "mysql_root_password"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: always
+
+volumes:
+  mysql_data:
